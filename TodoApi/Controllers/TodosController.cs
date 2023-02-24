@@ -27,32 +27,76 @@ namespace TodoApi.Controllers
         [HttpGet("{id}")]
         public ActionResult<TodoModel> Get(int id)
         {
-            TodoModel? todoItem = context.Todos.FirstOrDefault(t => t.Id == id);
+            TodoModel? todo = context.Todos.FirstOrDefault(t => t.Id == id);
 
-            if (todoItem == null)
+            if (todo == null)
             {
-                return NotFound("Sorry but couldn't find todo item");
+                return NotFound("Sorry but todo item was not found");
             }
 
-            return Ok(todoItem);
+            return Ok(todo);
         }
 
         // POST api/<TodosController>
         [HttpPost]
-        public void Post([FromBody] string value)
+        public IActionResult Post([FromBody] TodoModel todo)
         {
+            //get all todo items from db
+            List<TodoModel> todos = context.Todos.ToList();
+
+            TodoModel? foundTodo = todos.FirstOrDefault(t => t.Task.Trim().ToLower() == todo.Task.Trim().ToLower());
+
+            if (foundTodo == null)
+            {
+                context.Todos.Add(todo);
+                context.SaveChanges();
+                //KAN MAN SKICKA TILLBAKA BÅDA OBJEKTET OCH RESPONSE MESSAGE?
+                return Ok("Item was successfully added!");
+            }
+            else
+            {
+                return BadRequest("Todo item already exists!");
+            }
+            
         }
 
         // PUT api/<TodosController>/5
         [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        public ActionResult<TodoModel> Put(int id, [FromBody] TodoModel todo)
         {
+            //get all todo items from db
+            List<TodoModel> todos = context.Todos.ToList();
+
+            TodoModel? existingTodo = todos.FirstOrDefault(t => t.Id == todo.Id);
+
+            if (existingTodo == null)
+            {
+                return NotFound("Sorry, couldn't find the todo item");
+            }
+
+            existingTodo.Task = todo.Task;
+            existingTodo.IsDone = todo.IsDone;
+            context.SaveChanges();
+            return Ok("Item successfully updated!");
         }
 
         // DELETE api/<TodosController>/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public ActionResult<TodoModel> Delete(int id)
         {
+            //get all todo items from db
+            List<TodoModel> todos = context.Todos.ToList();
+
+            TodoModel? todoToDelete = todos.FirstOrDefault(t => t.Id == id);
+
+            if (todoToDelete == null)
+            {
+                return NotFound("Sorry, couldn't find the todo item");
+            }
+
+            context.Todos.Remove(todoToDelete);
+            context.SaveChanges();
+            return Ok(todoToDelete);
         }
     }
 }
